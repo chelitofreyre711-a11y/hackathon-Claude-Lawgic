@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parque Solar Valle Aurora · Semáforo de cumplimiento</title>
+<meta name="description" content="Revisa de un vistazo si se están cumpliendo las obligaciones de un contrato de crédito y su fideicomiso, y recibe avisos antes de que venzan.">
+<meta name="theme-color" content="#1D2945">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231d3b72'/><circle cx='16' cy='9' r='4' fill='%23ef4444'/><circle cx='16' cy='16' r='4' fill='%23f59e0b'/><circle cx='16' cy='23' r='4' fill='%2322c55e'/></svg>">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>
+    <div>
+      <strong>Parque Solar Valle Aurora</strong>
+      <small>Semáforo de cumplimiento</small>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="btn ghost" id="btnCalendario" title="Descarga las fechas para tu Outlook o Google Calendar, con recordatorios">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg>
+      <span>Agregar a mi calendario</span>
+    </button>
+    <button class="bell" id="btnAlertas" aria-label="Ver avisos">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16Zm4 3a2 2 0 0 0 4 0"/></svg>
+      <span class="bell-count" id="bellCount" hidden>0</span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="demo-note" role="note">Demostración con <b>datos ficticios</b>. No contiene información real de ningún proyecto.</div>
+
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow" id="contratoLinea">Cargando proyecto…</p>
+      <div class="partes" id="partesHero"></div>
+      <h1 id="heroTitulo">Revisando obligaciones…</h1>
+      <p class="hero-sub" id="heroSub"></p>
+      <div class="hero-actions">
+        <button class="btn primary" id="btnVerUrgente">Ver lo urgente</button>
+        <button class="btn ghost" id="btnNotif">Activar avisos en este equipo</button>
+      </div>
+    </div>
+    <div class="ring" id="ring" role="img" aria-label="Porcentaje de obligaciones al corriente">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"/></svg>
+      <div class="ring-label"><b id="ringPct">–</b><span>al corriente</span></div>
+    </div>
+  </section>
+
+  <section class="contratos" id="contratos" aria-label="Contratos del proyecto"></section>
+
+  <section class="cards" id="cards" aria-label="Resumen por estado"></section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Lo que viene en los próximos 60 días</h2>
+      <p>Desliza para ver las fechas en orden.</p>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head row">
+      <div>
+        <h2>Todas las obligaciones</h2>
+        <p id="listaCuenta"></p>
+      </div>
+      <div class="filters">
+        <div class="seg" id="segContrato" role="tablist" aria-label="Contrato"></div>
+        <input type="search" id="buscar" placeholder="Buscar: seguro, pago, reporte…" aria-label="Buscar obligación">
+      </div>
+    </div>
+    <div class="chips" id="chipsEstado" aria-label="Filtrar por estado"></div>
+    <div class="list" id="lista"></div>
+  </section>
+
+  <section class="panel" id="panelCorreos">
+    <div class="panel-head row">
+      <div>
+        <h2>✉️ Recordatorios por correo electrónico</h2>
+        <p>Así nadie depende de entrar a la app para enterarse.</p>
+      </div>
+      <div class="filters">
+        <button class="btn ghost" id="btnBandeja">Ver bandeja de correos</button>
+        <button class="btn primary" id="btnEnviarCorreos">Enviar recordatorios por correo</button>
+      </div>
+    </div>
+    <div class="mail-grid">
+      <div>
+        <div class="rule"><span class="n">1</span><div><b>Mes y medio antes (45 días)</b><span>El área responsable recibe un correo con qué hay que hacer, la fecha y qué pasa si no se cumple.</span></div></div>
+        <div class="rule dg"><span class="n">!</span><div><b>Si vence sin atenderse</b><span>Se envía un aviso de incumplimiento a <b>Dirección General</b>, con copia al área responsable.</span></div></div>
+        <div class="rule"><span class="n">✓</span><div><b>Al registrar "Ya se cumplió"</b><span>Los correos pendientes de ese periodo se cancelan solos.</span></div></div>
+        <p class="muted" style="font-size:13.5px;margin:4px 0 0">El sistema revisa y envía automáticamente todos los días a las 8:05 (hora de la Ciudad de México). El botón lo hace en este momento.</p>
+      </div>
+      <div>
+        <div class="mail-stats" id="mailStats"></div>
+        <b>Áreas responsables</b>
+        <ul class="areas" id="areasLista"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel help">
+    <h2>¿Cómo leer el semáforo?</h2>
+    <ul class="legend">
+      <li><span class="dot rojo"></span><b>Atrasada:</b> ya pasó la fecha y no se ha registrado como cumplida.</li>
+      <li><span class="dot ambar"></span><b>Vence pronto:</b> está dentro del periodo de aviso (por ejemplo, 30, 15, 7 o 1 día antes).</li>
+      <li><span class="dot verde"></span><b>Al día:</b> la fecha aún está lejos.</li>
+      <li><span class="dot azul"></span><b>Vigilar siempre:</b> reglas que aplican todo el tiempo o solo si ocurre algo (por ejemplo, no repartir dividendos).</li>
+      <li><span class="dot gris"></span><b>Cumplida:</b> obligación de una sola vez que ya se cumplió.</li>
+    </ul>
+    <p class="muted">Cada mañana a las 8:00 (hora de la Ciudad de México) el sistema revisa las fechas y genera avisos automáticamente.</p>
+  </section>
+</main>
+
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-box" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <div class="drawer-head">
+      <h2 id="drawerTitle">Avisos</h2>
+      <button class="icon-btn" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div id="alertasLista" class="alert-list"></div>
+    <button class="btn ghost full" id="btnLeidas">Marcar todos como leídos</button>
+  </div>
+</aside>
+
+<dialog id="detalle" aria-labelledby="detTitulo">
+  <div class="det">
+    <button type="button" class="icon-btn det-close" id="detCerrar" aria-label="Cerrar">✕</button>
+    <div id="detContenido"></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
