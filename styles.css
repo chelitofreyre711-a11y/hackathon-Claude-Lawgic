@@ -92,7 +92,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .rule{display:flex;gap:12px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
 .rule .n{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--teal)}
 .rule.dg .n{background:var(--rojo)}
-.rule b{display:block}
+.rule > div > b:first-child{display:block}
 .rule span{color:var(--muted);font-size:14px}
 .mail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .mail-stats div,.mail-stats .stat{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
