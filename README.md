@@ -54,6 +54,19 @@ Se usa cuando la cuenta corporativa no permite que servicios externos envíen co
   powershell -NoProfile -ExecutionPolicy Bypass -File automatizacion/enviar-correos-outlook.ps1 -Simular
   ```
 
+## Obligaciones en el calendario de Outlook
+
+`automatizacion/sincronizar-calendario-outlook.ps1` crea en el calendario de Outlook de escritorio un evento de día completo por cada obligación con fecha.
+
+- **Cómo se ve:** cada evento lleva la categoría "Valle Aurora", aparece como "Disponible" y tiene un recordatorio 7 días antes. Las de prioridad alta van con importancia alta y las atrasadas con 🔴.
+- **Qué hay dentro del evento:** qué hay que hacer, qué pasa si no se cumple, contrato, cláusula, área responsable y liga a la app.
+- **Se mantiene al día solo:** si al registrar un cumplimiento la fecha se recorre, el evento se mueve; si la obligación ya no tiene fecha pendiente, el evento se elimina.
+- **No duplica ni toca tus otras citas:** solo modifica eventos creados por el propio script, que lleva la marca `ValleAuroraId`.
+- **Simular sin cambiar nada:**
+  ```bash
+  powershell -NoProfile -ExecutionPolicy Bypass -File automatizacion/sincronizar-calendario-outlook.ps1 -Simular
+  ```
+
 ## Respuestas de las áreas → app + OneDrive (activo)
 
 Cuando una persona **responde** a un recordatorio o a un aviso de incumplimiento, su respuesta se integra sola a la app.
