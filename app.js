@@ -181,12 +181,14 @@ function abrirContrato(id) {
 }
 
 function renderCorreos() {
-  const n = (e) => state.correos.filter((c) => c.estado === e).length;
-  $('#mailStats').innerHTML = `<div><b>${n('pendiente')}</b><small>Por enviar</small></div>
-    <div><b>${n('enviado')}</b><small>Enviados</small></div>
-    <div><b>${state.correos.filter((c) => c.tipo === 'incumplimiento' && c.estado !== 'cancelado').length}</b><small>A Dirección General</small></div>
-    <div><b>${state.respuestas.length}</b><small>Respuestas recibidas</small></div>
-    <div><b>${state.respuestas.filter((r) => !r.revisada).length}</b><small>Sin revisar</small></div>
+  const cuenta = (f) => state.correos.filter(FILTROS_CORREO[f].fn).length;
+  const tile = (n, etiqueta, attr) => `<button class="stat" ${attr} title="Ver ${etiqueta.toLowerCase()}"><b>${n}</b><small>${etiqueta}</small></button>`;
+  $('#mailStats').innerHTML =
+    tile(cuenta('pendiente'), 'Por enviar', 'data-bandeja="pendiente"') +
+    tile(cuenta('enviado'), 'Enviados', 'data-bandeja="enviado"') +
+    tile(cuenta('direccion'), 'A Dirección General', 'data-bandeja="direccion"') +
+    tile(state.respuestas.length, 'Respuestas recibidas', 'data-respuestas="todas"') +
+    tile(state.respuestas.filter((r) => !r.revisada).length, 'Sin revisar', 'data-respuestas="sin_revisar"') + `
     ${(() => {
       // La carpeta del proyecto se deduce de las respuestas guardadas (no se escribe en el código)
       const url = state.respuestas.find((r) => r.carpeta_url)?.carpeta_url;
@@ -199,31 +201,78 @@ function renderCorreos() {
 
 const mailto = (c) => `mailto:${encodeURIComponent(c.para)}?${c.cc ? 'cc=' + encodeURIComponent(c.cc) + '&' : ''}subject=${encodeURIComponent(c.asunto)}&body=${encodeURIComponent(c.cuerpo)}`;
 
-function abrirBandeja(aviso = '') {
+const FILTROS_CORREO = {
+  todos: { titulo: 'Todos los correos', fn: () => true },
+  pendiente: { titulo: 'Correos por enviar', fn: (c) => c.estado === 'pendiente' || c.estado === 'error' },
+  enviado: { titulo: 'Correos enviados', fn: (c) => c.estado === 'enviado' },
+  direccion: { titulo: 'Avisos de incumplimiento a Dirección General', fn: (c) => c.tipo === 'incumplimiento' && c.estado !== 'cancelado' },
+};
+
+function abrirBandeja(aviso = '', filtro = 'todos') {
   const orden = { pendiente: 0, error: 1, enviado: 2, cancelado: 3 };
-  const lista = [...state.correos].sort((a, b) => orden[a.estado] - orden[b.estado]
+  const f = FILTROS_CORREO[filtro];
+  const abierto = filtro !== 'todos';   // desde un contador, el contenido se muestra directamente
+  const lista = state.correos.filter(f.fn).sort((a, b) => orden[a.estado] - orden[b.estado]
     || (a.tipo === 'incumplimiento' ? -1 : 1) - (b.tipo === 'incumplimiento' ? -1 : 1)
     || a.fecha_objetivo.localeCompare(b.fecha_objetivo));
   $('#detContenido').innerHTML = `
     <span class="pill azul">✉️ Bandeja de correos</span>
-    <h2 id="detTitulo">Recordatorios y avisos de incumplimiento</h2>
+    <h2 id="detTitulo">${f.titulo} (${lista.length})</h2>
+    <div class="chips" style="margin:8px 0 0">${Object.entries(FILTROS_CORREO).map(([k, v]) =>
+      `<button class="chip" data-bandeja="${k}" aria-pressed="${k === filtro}">${k === 'todos' ? 'Todos' : v.titulo.replace('Correos ', '').replace('Avisos de incumplimiento a ', '')}</button>`).join('')}</div>
     ${aviso ? `<div class="info">${aviso}</div>` : ''}
     <div class="alert-list" style="margin-top:12px">${lista.length ? lista.map((c) => {
       const e = ESTADO_CORREO[c.estado];
       const tipo = c.tipo === 'incumplimiento' ? '🚨 Aviso de incumplimiento' : '⏰ Recordatorio';
-      return `<div class="correo ${c.tipo === 'incumplimiento' ? 'rojo' : e.cls}">
-        <div><span class="pill ${e.cls}"><span class="dot"></span>${e.label}</span> <small class="muted">${tipo}</small></div>
+      const rs = state.respuestas.filter((r) => r.correo_id === c.id || (!r.correo_id && r.obligacion_id === c.obligacion_id));
+      return `<div class="correo ${c.tipo === 'incumplimiento' ? 'rojo' : e.cls} ${abierto ? 'open' : ''}">
+        <div><span class="pill ${e.cls}"><span class="dot"></span>${e.label}</span> <small class="muted">${tipo}${c.enviado_at ? ' · enviado ' + fecha(c.enviado_at) : ''}</small></div>
         <b>${esc(c.asunto)}</b>
-        <div class="para">Para: ${esc(c.para)}${c.cc ? ' · CC: ' + esc(c.cc) : ''}${c.enviado_at ? ' · enviado ' + fecha(c.enviado_at) : ''}</div>
-        ${c.error && c.estado !== 'enviado' ? `<div class="para">${esc(c.error)}</div>` : ''}
+        <div class="para">Para: ${esc(c.para)}${c.cc ? ' · CC: ' + esc(c.cc) : ''}</div>
+        ${c.error ? `<div class="para">ℹ️ ${esc(c.error)}</div>` : ''}
         <pre>${esc(c.cuerpo)}</pre>
         <div class="correo-acc">
-          <button class="btn ghost" data-toggle-correo>Ver mensaje</button>
+          <button class="btn ghost" data-toggle-correo>${abierto ? 'Ocultar mensaje' : 'Ver mensaje'}</button>
+          <button class="btn ghost" data-abrir-ob="${c.obligacion_id}">Ver obligación</button>
+          ${rs.length ? `<button class="btn ghost" data-respuestas-ob="${c.obligacion_id}">📨 ${plural(rs.length, 'respuesta', 'respuestas')}</button>` : ''}
           ${c.estado === 'pendiente' || c.estado === 'error' ? `<a class="btn ghost" href="${mailto(c)}">Abrir en mi correo</a>` : ''}
         </div></div>`;
-    }).join('') : '<p class="empty">No hay correos todavía.</p>'}</div>`;
+    }).join('') : '<p class="empty">No hay correos en esta categoría.</p>'}</div>`;
   const dlg = $('#detalle');
   if (!dlg.open) dlg.showModal();
+  dlg.scrollTop = 0;
+}
+
+function abrirRespuestas(filtro = 'todas', obligacionId = null) {
+  let lista = state.respuestas;
+  if (filtro === 'sin_revisar') lista = lista.filter((r) => !r.revisada);
+  if (obligacionId) lista = lista.filter((r) => r.obligacion_id === obligacionId);
+  const titulo = obligacionId ? 'Respuestas de esta obligación' : filtro === 'sin_revisar' ? 'Respuestas sin revisar' : 'Respuestas recibidas';
+  $('#detContenido').innerHTML = `
+    <span class="pill azul">📨 Respuestas de las áreas</span>
+    <h2 id="detTitulo">${titulo} (${lista.length})</h2>
+    <div class="chips" style="margin:8px 0 0">
+      <button class="chip" data-respuestas="todas" aria-pressed="${!obligacionId && filtro === 'todas'}">Todas</button>
+      <button class="chip" data-respuestas="sin_revisar" aria-pressed="${!obligacionId && filtro === 'sin_revisar'}">Sin revisar</button>
+    </div>
+    <div class="alert-list" style="margin-top:12px">${lista.length ? lista.map((r) => {
+      const o = state.obligaciones.find((x) => x.id === r.obligacion_id);
+      return `<div class="correo ${r.revisada ? 'gris' : 'azul'} open">
+        <div><span class="pill ${r.revisada ? 'gris' : 'azul'}"><span class="dot"></span>${r.revisada ? 'Revisada' : 'Sin revisar'}</span>
+          <small class="muted"> recibida ${fecha(r.recibido_at)}</small></div>
+        <b>${esc(r.asunto || '(sin asunto)')}</b>
+        <div class="para">De: ${esc(r.remitente)}${o ? ` · Obligación: ${CATEGORIAS[o.categoria]} ${esc(o.titulo)}` : ''}</div>
+        <pre>${esc(r.texto || '(sin texto)')}</pre>
+        ${r.archivos.length ? `<div class="para">📎 ${r.archivos.map((a) => `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.nombre)}</a>`).join(' · ')}</div>` : '<div class="para">Sin archivos adjuntos.</div>'}
+        <div class="correo-acc">
+          ${r.carpeta_url ? `<a class="btn ghost" href="${esc(r.carpeta_url)}" target="_blank" rel="noopener">📁 Carpeta en OneDrive</a>` : ''}
+          <button class="btn ghost" data-abrir-ob="${r.obligacion_id}">Ver obligación</button>
+          ${r.revisada ? '' : `<button class="btn ghost" data-revisar-respuesta="${r.id}" data-vista="respuestas">Marcar revisada</button>`}
+        </div></div>`;
+    }).join('') : '<p class="empty">No hay respuestas en esta categoría.</p>'}</div>`;
+  const dlg = $('#detalle');
+  if (!dlg.open) dlg.showModal();
+  dlg.scrollTop = 0;
 }
 
 async function enviarCorreos() {
@@ -485,6 +534,13 @@ document.addEventListener('click', async (ev) => {
   } else if (t.dataset.abrirOb) {
     abrirDetalle(t.dataset.abrirOb);
     $('#detalle').scrollTop = 0;
+  } else if (t.dataset.bandeja) {
+    abrirBandeja('', t.dataset.bandeja);
+  } else if (t.dataset.respuestas) {
+    state.vistaRespuestas = t.dataset.respuestas;
+    abrirRespuestas(t.dataset.respuestas);
+  } else if (t.dataset.respuestasOb) {
+    abrirRespuestas('todas', t.dataset.respuestasOb);
   } else if (t.dataset.usarRespuesta) {
     const r = state.respuestas.find((x) => x.id === t.dataset.usarRespuesta);
     const form = $('#formCumplir');
@@ -499,7 +555,12 @@ document.addEventListener('click', async (ev) => {
     const { error } = await sb.rpc('marcar_respuesta_revisada', { p_id: t.dataset.revisarRespuesta });
     if (error) { toast('No se pudo actualizar: ' + error.message); return; }
     const r = state.respuestas.find((x) => x.id === t.dataset.revisarRespuesta);
-    if (r) { r.revisada = true; abrirDetalle(r.obligacion_id); renderLista(); renderCorreos(); }
+    if (r) {
+      r.revisada = true;
+      if (t.dataset.vista === 'respuestas') abrirRespuestas(state.vistaRespuestas || 'todas');
+      else abrirDetalle(r.obligacion_id);
+      renderLista(); renderCorreos();
+    }
   } else if (t.hasAttribute('data-toggle-correo')) {
     const card = t.closest('.correo');
     card.classList.toggle('open');
